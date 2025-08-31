@@ -293,8 +293,7 @@
             <div class="feedback-details" id="endDetails"></div>
             <div class="game-btn-container">
                 <button id="nextSetBtn" class="game-btn" style="display: none;">ไปยังชุดถัดไป</button>
-                <button id="restartBtn" class="game-btn" style="display: none;"></button>
-                <button id="backToHomeBtn" class="game-btn" style="display: none;">กลับไปหน้าแรก</button>
+                <button id="restartBtn" class="game-btn" style="display: none;">กลับไปหน้าแรก</button>
             </div>
         </div>
     </div>
@@ -320,7 +319,6 @@
         const endMessage = document.getElementById('endMessage');
         const endDetails = document.getElementById('endDetails');
         const restartBtn = document.getElementById('restartBtn');
-        const backToHomeBtn = document.getElementById('backToHomeBtn');
 
         // Game state variables
         let totalQuestions = 20;
@@ -336,15 +334,29 @@
         let timerInterval;
 
         // Tone.js sound effects
-        const bellSynth = new Tone.MembraneSynth({
-            pitchDecay: 0.008,
-            octaves: 2,
-            envelope: { attack: 0.001, decay: 0.4, sustain: 0, release: 0.05 }
+        const reverb = new Tone.Reverb({
+            decay: 2,
+            preDelay: 0.01,
+            wet: 0.5
         }).toDestination();
         
-        const buzzer = new Tone.Synth({
+        const correctSynth = new Tone.MetalSynth({
+            frequency: 400,
+            envelope: {
+                attack: 0.001,
+                decay: 0.5,
+                sustain: 0.1,
+                release: 0.4
+            },
+            harmonicity: 5.1,
+            modulationIndex: 14,
+            resonance: 600,
+            octaves: 2
+        }).connect(reverb);
+        
+        const incorrectSynth = new Tone.Synth({
             oscillator: { type: "square" },
-            envelope: { attack: 0.01, decay: 0.2, sustain: 0.01, release: 0.2 },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.1 }
         }).toDestination();
 
         /**
@@ -417,6 +429,7 @@
             const selectedBtn = event.target;
             const userAnswer = parseInt(selectedBtn.textContent, 10);
             const { result } = currentProblem;
+            const now = Tone.now();
 
             gameContent.style.display = 'none';
             feedbackScreen.style.display = 'flex';
@@ -427,12 +440,13 @@
                 feedbackDetails.textContent = '';
                 score++;
                 scoreSpan.textContent = score;
-                bellSynth.triggerAttackRelease("C5", "8n");
+                correctSynth.triggerAttackRelease("C5", "8n");
             } else {
                 feedbackMessage.textContent = 'ไม่เป็นไร ไว้ลองใหม่นะ';
                 feedbackMessage.className = 'feedback-message incorrect';
                 feedbackDetails.textContent = `คำตอบที่ถูกต้องคือ ${result}`;
-                buzzer.triggerAttackRelease("C3", "8n");
+                incorrectSynth.triggerAttackRelease("C3", "16n", now);
+                incorrectSynth.triggerAttackRelease("A2", "16n", now + 0.1);
             }
             
             // Automatically transition to the next question after 2 seconds
@@ -472,19 +486,17 @@
             gameContent.style.display = 'none';
             feedbackScreen.style.display = 'none';
             endScreen.style.display = 'flex';
-            backToHomeBtn.style.display = 'block';
-            nextSetBtn.style.display = 'none'; // Hide "ไปยังชุดถัดไป" button
-
+            
             if (currentSet < totalSets) {
                 endMessage.textContent = `ชุดที่ ${currentSet} จบแล้ว!`;
                 endDetails.textContent = `คุณทำคะแนนได้ ${score} จาก ${totalQuestions} คะแนน ในเวลา ${timeElapsed} วินาที!`;
-                restartBtn.textContent = 'เลือกชุดใหม่';
                 restartBtn.style.display = 'block';
+                nextSetBtn.style.display = 'block';
             } else {
                 endMessage.textContent = 'ยินดีด้วย! คุณทำครบทุกชุดแล้ว!';
                 endDetails.textContent = `คะแนนรวมทั้งหมดของคุณคือ ${score} จาก ${totalQuestions * totalSets} คะแนน ในเวลา ${timeElapsed} วินาที!`;
-                restartBtn.textContent = 'เริ่มเกมใหม่';
                 restartBtn.style.display = 'block';
+                nextSetBtn.style.display = 'none';
             }
         }
 
@@ -506,12 +518,16 @@
         });
         
         restartBtn.addEventListener('click', () => {
-            startScreen.style.display = 'flex';
+            currentSet = 1;
             endScreen.style.display = 'none';
+            setSelectorStart.value = currentSet;
+            startScreen.style.display = 'flex';
         });
 
-        backToHomeBtn.addEventListener('click', () => {
-            window.location.href = 'index.html';
+        nextSetBtn.addEventListener('click', () => {
+            currentSet++;
+            setSelectorInGame.value = currentSet;
+            startSet();
         });
 
         setSelectorInGame.addEventListener('change', (event) => {
