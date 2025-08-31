@@ -248,6 +248,11 @@
         
         <!-- Main Game Content (Question Screen) -->
         <div id="game-content" style="display: none; flex-direction: column; align-items: center; gap: 1.5rem;">
+            <!-- New set selector added here -->
+            <div id="set-selector-container-game">
+                <label for="set-selector-game">เลือกชุดโจทย์:</label>
+                <select id="set-selector-game"></select>
+            </div>
             <div id="game-controls">
                 <div class="progress-text" id="progressText"></div>
             </div>
@@ -291,6 +296,7 @@
         const scoreSpan = document.getElementById('score');
         const timerSpan = document.getElementById('timer');
         const setSelectorStart = document.getElementById('set-selector');
+        const setSelectorGame = document.getElementById('set-selector-game');
         const startScreen = document.getElementById('start-screen');
         const gameContent = document.getElementById('game-content');
         const feedbackScreen = document.getElementById('feedback-screen');
@@ -404,6 +410,10 @@
                 btn.textContent = shuffledChoices[index];
             });
             progressText.textContent = `ชุดที่ ${currentSet} | ข้อที่ ${questionIndex + 1} / ${totalQuestionsPerSet}`;
+            
+            // Sync both dropdowns
+            setSelectorStart.value = currentSet;
+            setSelectorGame.value = currentSet;
         }
 
         /**
@@ -516,21 +526,35 @@
             currentSet++;
             startSet();
         });
+        
+        // Event listener for changing sets during the game
+        setSelectorGame.addEventListener('change', (e) => {
+            currentSet = parseInt(e.target.value, 10);
+            startSet();
+        });
 
         choiceBtns.forEach(btn => {
             btn.addEventListener('click', checkAnswer);
         });
 
         // Initialize set selector options
-        for (let i = 1; i <= totalSets; i++) {
-            const option = document.createElement('option');
-            option.value = i;
-            option.textContent = `ชุดที่ ${i}`;
-            setSelectorStart.appendChild(option);
+        function initializeSetSelectors() {
+            for (let i = 1; i <= totalSets; i++) {
+                const optionStart = document.createElement('option');
+                optionStart.value = i;
+                optionStart.textContent = `ชุดที่ ${i}`;
+                setSelectorStart.appendChild(optionStart);
+                
+                const optionGame = document.createElement('option');
+                optionGame.value = i;
+                optionGame.textContent = `ชุดที่ ${i}`;
+                setSelectorGame.appendChild(optionGame);
+            }
         }
         
         window.onload = function() {
             preGenerateProblems();
+            initializeSetSelectors();
             Tone.start();
         };
     </script>
