@@ -213,6 +213,10 @@
             color: var(--dark-text);
         }
 
+        .feedback-details.incorrect {
+            color: white;
+        }
+
 
         /* Mobile-first adjustments */
         @media (max-width: 480px) {
@@ -385,7 +389,7 @@
             const currentProblem = allProblems[currentSet - 1][questionIndex];
             const { number1, number2, result } = currentProblem;
             
-            problemText.textContent = `${number1} x ${number2} = ?`;
+            problemText.textContent = `${number1} x ${number2}`;
             
             const correctAnswer = result;
 
@@ -418,19 +422,21 @@
             feedbackScreen.style.display = 'flex';
             
             const now = Tone.now();
+            feedbackDetails.classList.remove('incorrect');
 
             if (userAnswer === result) {
-                feedbackMessage.textContent = 'ถูกต้องจ้า!';
+                feedbackMessage.textContent = ''; // Remove message for correct answer
                 feedbackMessage.className = 'feedback-message correct';
-                feedbackDetails.textContent = '';
+                feedbackDetails.textContent = ''; // Remove details for correct answer
                 score++;
                 scoreSpan.textContent = score;
                 // Play a bell sound with reverb
                 correctSynth.triggerAttackRelease("C5", "8n");
             } else {
-                feedbackMessage.textContent = 'ไม่เป็นไร ไว้ลองใหม่นะ';
+                feedbackMessage.textContent = ''; // Remove message for incorrect answer
                 feedbackMessage.className = 'feedback-message incorrect';
-                feedbackDetails.textContent = `คำตอบที่ถูกต้องคือ ${result}`;
+                feedbackDetails.textContent = `${result}`; // Only show the correct number
+                feedbackDetails.classList.add('incorrect'); // Make the text white
                 // Play a distinct descending tone
                 incorrectSynth.triggerAttackRelease("C3", "16n", now);
                 incorrectSynth.triggerAttackRelease("A2", "16n", now + 0.1);
