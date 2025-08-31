@@ -184,33 +184,27 @@
         #feedback-screen {
             display: none;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
             gap: 1.5rem;
             width: 100%;
-            text-align: center;
-        }
-
-        .feedback-message {
-            font-size: 2.5rem;
-            font-weight: 700;
-            padding: 1.5rem;
+            min-height: 200px;
             border-radius: 15px;
-            width: 100%;
+            font-weight: 700;
+            color: white;
         }
 
-        .feedback-message.correct {
-            color: white;
+        #feedback-screen.correct {
             background-color: var(--success-color);
         }
         
-        .feedback-message.incorrect {
-            color: white;
+        #feedback-screen.incorrect {
             background-color: var(--error-color);
         }
         
-        .feedback-details {
-            font-size: 1.2rem;
-            color: var(--dark-text);
+        /* New styles for just showing the number */
+        #feedback-screen.incorrect .feedback-message {
+            font-size: 5rem;
         }
 
 
@@ -433,18 +427,19 @@
 
             gameContent.style.display = 'none';
             feedbackScreen.style.display = 'flex';
+            
+            feedbackMessage.textContent = '';
+            feedbackDetails.textContent = '';
+            feedbackScreen.className = 'feedback-screen';
 
             if (userAnswer === result) {
-                feedbackMessage.textContent = 'ถูกต้องจ้า!';
-                feedbackMessage.className = 'feedback-message correct';
-                feedbackDetails.textContent = '';
+                feedbackScreen.classList.add('correct');
                 score++;
                 scoreSpan.textContent = score;
                 correctSynth.triggerAttackRelease("C5", "8n");
             } else {
-                feedbackMessage.textContent = 'ไม่เป็นไร ไว้ลองใหม่นะ';
-                feedbackMessage.className = 'feedback-message incorrect';
-                feedbackDetails.textContent = `คำตอบที่ถูกต้องคือ ${result}`;
+                feedbackScreen.classList.add('incorrect');
+                feedbackMessage.textContent = result;
                 incorrectSynth.triggerAttackRelease("C3", "16n", now);
                 incorrectSynth.triggerAttackRelease("A2", "16n", now + 0.1);
             }
