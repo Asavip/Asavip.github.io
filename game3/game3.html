@@ -185,38 +185,32 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            gap: 1.5rem;
+            justify-content: center; /* Center content vertically */
+            gap: 0;
             width: 100%;
             text-align: center;
-        }
-
-        .feedback-message {
-            font-size: 2.5rem;
-            font-weight: 700;
-            padding: 1.5rem;
+            transition: background-color 0.5s ease-in-out;
+            min-height: 250px;
             border-radius: 15px;
-            width: 100%;
         }
-
-        .feedback-message.correct {
-            color: white;
+        
+        #feedback-screen.correct {
             background-color: var(--success-color);
         }
         
-        .feedback-message.incorrect {
-            color: white;
+        #feedback-screen.incorrect {
             background-color: var(--error-color);
+        }
+
+        .feedback-message {
+            display: none;
         }
         
         .feedback-details {
-            font-size: 1.2rem;
-            color: var(--dark-text);
-        }
-
-        .feedback-details.incorrect {
+            font-size: 4.5rem;
+            font-weight: 700;
             color: white;
         }
-
 
         /* Mobile-first adjustments */
         @media (max-width: 480px) {
@@ -226,11 +220,14 @@
             h1 {
                 font-size: 2rem;
             }
-            .problem, .feedback-message {
+            .problem {
                 font-size: 3rem;
             }
             .choice-btn {
                 font-size: 2rem;
+            }
+            .feedback-details {
+                font-size: 3.5rem;
             }
         }
     </style>
@@ -421,22 +418,22 @@
             gameContent.style.display = 'none';
             feedbackScreen.style.display = 'flex';
             
+            // Clear all previous classes and content
+            feedbackScreen.classList.remove('correct', 'incorrect');
+            feedbackMessage.textContent = '';
+            feedbackDetails.textContent = '';
+
             const now = Tone.now();
-            feedbackDetails.classList.remove('incorrect');
 
             if (userAnswer === result) {
-                feedbackMessage.textContent = ''; // Remove message for correct answer
-                feedbackMessage.className = 'feedback-message correct';
-                feedbackDetails.textContent = ''; // Remove details for correct answer
+                feedbackScreen.classList.add('correct');
                 score++;
                 scoreSpan.textContent = score;
                 // Play a bell sound with reverb
                 correctSynth.triggerAttackRelease("C5", "8n");
             } else {
-                feedbackMessage.textContent = ''; // Remove message for incorrect answer
-                feedbackMessage.className = 'feedback-message incorrect';
+                feedbackScreen.classList.add('incorrect');
                 feedbackDetails.textContent = `${result}`; // Only show the correct number
-                feedbackDetails.classList.add('incorrect'); // Make the text white
                 // Play a distinct descending tone
                 incorrectSynth.triggerAttackRelease("C3", "16n", now);
                 incorrectSynth.triggerAttackRelease("A2", "16n", now + 0.1);
