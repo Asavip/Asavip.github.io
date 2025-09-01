@@ -11,13 +11,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
-            --primary-color: #ff8c00; /* Orange */
-            --secondary-color: #ffaa42;
-            --light-bg: #fff5e6;
-            --dark-text: #4a4a4a;
-            --success-color: #3cb371; /* Medium Sea Green */
-            --error-color: #e55353; /* Reddish tone */
-            --info-color: #ff6347; /* Tomato */
+            --primary-color: #2c3e50; /* Dark Blue */
+            --secondary-color: #3498db; /* Brighter Blue */
+            --light-bg: #ecf0f1; /* Cloudy White */
+            --dark-text: #2c3e50; /* Very Dark Blue */
+            --success-color: #3cb371; /* Green */
+            --error-color: #e55353; /* Red */
+            --info-color: #2980b9; /* Blue Info */
         }
 
         body {
@@ -26,11 +26,12 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(to bottom, #ffc72c, #ff9f1c); /* Orange gradient */
+            background-color: #FFA500; /* Orange background */
             color: var(--dark-text);
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
+            transition: background-color 0.5s ease;
         }
 
         .game-container {
@@ -45,6 +46,7 @@
             flex-direction: column;
             align-items: center;
             gap: 1.5rem;
+            transition: opacity 0.5s ease;
         }
 
         h1 {
@@ -184,10 +186,17 @@
         #feedback-screen {
             display: none;
             flex-direction: column;
+            justify-content: center;
             align-items: center;
             gap: 1.5rem;
             width: 100%;
             text-align: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
         }
 
         .feedback-message {
@@ -197,22 +206,18 @@
             border-radius: 15px;
             width: 100%;
         }
-
-        .feedback-message.correct {
-            color: white;
-            background-color: var(--success-color);
+        
+        .correct-answer-display {
+            font-size: 5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            color: white; /* Default color for correct answer display */
         }
         
-        .feedback-message.incorrect {
-            color: white;
-            background-color: var(--error-color);
+        .correct-answer-display.incorrect-text {
+            color: var(--error-color); /* Red color for incorrect answer feedback */
+            text-shadow: none;
         }
-        
-        .feedback-details {
-            font-size: 1.2rem;
-            color: var(--dark-text);
-        }
-
 
         /* Mobile-first adjustments */
         @media (max-width: 480px) {
@@ -282,9 +287,9 @@
         </div>
 
         <!-- Feedback Screen -->
-        <div id="feedback-screen">
+        <div id="feedback-screen" style="display: none;">
             <div class="feedback-message" id="feedbackMessage"></div>
-            <div class="feedback-details" id="feedbackDetails"></div>
+            <div class="correct-answer-display" id="correctAnswerDisplay"></div>
         </div>
 
         <!-- End of Set Screen -->
@@ -315,7 +320,7 @@
         const gameContent = document.getElementById('game-content');
         const feedbackScreen = document.getElementById('feedback-screen');
         const feedbackMessage = document.getElementById('feedbackMessage');
-        const feedbackDetails = document.getElementById('feedbackDetails');
+        const correctAnswerDisplay = document.getElementById('correctAnswerDisplay');
         const endScreen = document.getElementById('end-screen');
         const endMessage = document.getElementById('endMessage');
         const endDetails = document.getElementById('endDetails');
@@ -334,6 +339,8 @@
         // Timer variables
         let timeElapsed = 0;
         let timerInterval;
+        
+        const mainBackground = '#FFA500';
 
         // Tone.js sound effects
         const bellSynth = new Tone.MembraneSynth({
@@ -414,6 +421,7 @@
                 btn.disabled = false;
                 btn.classList.remove('correct-answer', 'incorrect-answer');
             });
+            correctAnswerDisplay.classList.remove('incorrect-text');
 
             currentProblem = allProblems[currentSet - 1][questionIndex];
             const { num1, num2, result } = currentProblem;
@@ -461,23 +469,33 @@
             const userAnswer = parseInt(selectedBtn.textContent, 10);
             const { result } = currentProblem;
 
-            gameContent.style.display = 'none';
-            feedbackScreen.style.display = 'flex';
-
-            if (userAnswer === result) {
-                feedbackMessage.textContent = 'ถูกต้องจ้า!';
-                feedbackMessage.className = 'feedback-message correct';
-                feedbackDetails.textContent = '';
-                score++;
-                scoreSpan.textContent = score;
-                bellSynth.triggerAttackRelease("C5", "8n");
-            } else {
-                feedbackMessage.textContent = 'ไม่เป็นไร ไว้ลองใหม่นะ';
-                feedbackMessage.className = 'feedback-message incorrect';
-                feedbackDetails.textContent = `คำตอบที่ถูกต้องคือ ${result}`;
-                buzzer.triggerAttackRelease("C3", "8n");
-            }
+            // Fade out game content
+            gameContent.style.opacity = '0';
             
+            // Wait for fade out, then change screen and background
+            setTimeout(() => {
+                gameContent.style.display = 'none';
+                feedbackScreen.style.display = 'flex';
+
+                if (userAnswer === result) {
+                    // ถ้าตอบถูก: หน้าจอจะเปลี่ยนเป็นพื้นหลังสีเขียวล้วน ไม่มีข้อความ
+                    document.body.style.backgroundColor = 'var(--success-color)';
+                    feedbackMessage.style.display = 'none';
+                    correctAnswerDisplay.style.display = 'none';
+                    score++;
+                    scoreSpan.textContent = score;
+                    bellSynth.triggerAttackRelease("C5", "8n");
+                } else {
+                    // ถ้าตอบผิด: หน้าจอจะเปลี่ยนเป็นพื้นหลังสีเทาอ่อน และแสดงเฉพาะตัวเลขคำตอบที่ถูกต้องเป็นสีแดง
+                    document.body.style.backgroundColor = 'var(--light-bg)';
+                    feedbackMessage.style.display = 'none';
+                    correctAnswerDisplay.textContent = result;
+                    correctAnswerDisplay.classList.add('incorrect-text');
+                    correctAnswerDisplay.style.display = 'block';
+                    buzzer.triggerAttackRelease("C3", "8n");
+                }
+            }, 500); // Wait for the fade-out duration
+
             // Automatically transition to the next question after 2 seconds
             setTimeout(showNextQuestion, 2000); 
         }
@@ -494,6 +512,10 @@
             feedbackScreen.style.display = 'none';
             endScreen.style.display = 'none';
             gameContent.style.display = 'flex';
+            gameContent.style.opacity = '1';
+
+            // Reset background color
+            document.body.style.backgroundColor = mainBackground;
 
             timeElapsed = 0;
             timerSpan.textContent = timeElapsed;
@@ -517,6 +539,7 @@
             endScreen.style.display = 'flex';
             backToHomeBtn.style.display = 'block';
             nextSetBtn.style.display = 'none'; // Hide "ไปยังชุดถัดไป" button
+            document.body.style.backgroundColor = mainBackground;
 
             if (currentSet < totalSets) {
                 endMessage.textContent = `ชุดที่ ${currentSet} จบแล้ว!`;
@@ -537,6 +560,8 @@
         function showNextQuestion() {
             feedbackScreen.style.display = 'none';
             gameContent.style.display = 'flex';
+            gameContent.style.opacity = '1';
+            document.body.style.backgroundColor = mainBackground;
             loadNextQuestion();
         }
 
