@@ -436,16 +436,18 @@
             feedbackScreen.style.display = 'flex';
 
             if (userAnswer === result) {
-                feedbackMessage.textContent = 'ถูกต้องจ้า!';
+                // Correct answer: Show only green background
+                feedbackMessage.textContent = '';
                 feedbackMessage.className = 'feedback-message correct';
                 feedbackDetails.textContent = '';
                 score++;
                 scoreSpan.textContent = score;
                 bellSynth.triggerAttackRelease("C5", "8n");
             } else {
-                feedbackMessage.textContent = 'ไม่เป็นไร ไว้ลองใหม่นะ';
+                // Incorrect answer: Show only the correct number on a red background
+                feedbackMessage.textContent = result;
                 feedbackMessage.className = 'feedback-message incorrect';
-                feedbackDetails.textContent = `คำตอบที่ถูกต้องคือ ${result}`;
+                feedbackDetails.textContent = '';
                 buzzer.triggerAttackRelease("C3", "8n");
             }
             
