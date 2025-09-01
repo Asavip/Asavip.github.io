@@ -11,13 +11,13 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
         :root {
-            --primary-color: #2c3e50; /* Dark Blue */
-            --secondary-color: #3498db; /* Brighter Blue */
-            --light-bg: #ecf0f1; /* Cloudy White */
-            --dark-text: #2c3e50; /* Very Dark Blue */
-            --success-color: #3cb371; /* Green */
-            --error-color: #e55353; /* Red */
-            --info-color: #2980b9; /* Blue Info */
+            --primary-color: #ff9800; /* Orange */
+            --secondary-color: #ffb74d; /* Light Orange */
+            --light-bg: #fff3e0; /* Lighter Orange */
+            --dark-text: #e65100; /* Dark Orange */
+            --success-color: #4caf50; /* Green */
+            --error-color: #f44336; /* Red */
+            --info-color: #ff5722; /* Deep Orange */
         }
 
         body {
@@ -26,12 +26,11 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #FFA500; /* Orange background */
+            background: linear-gradient(to right, #e65100, #ffb74d); /* Dark Orange to Light Orange gradient */
             color: var(--dark-text);
             margin: 0;
             padding: 20px;
             box-sizing: border-box;
-            transition: background-color 0.5s ease;
         }
 
         .game-container {
@@ -46,7 +45,6 @@
             flex-direction: column;
             align-items: center;
             gap: 1.5rem;
-            transition: opacity 0.5s ease;
         }
 
         h1 {
@@ -186,17 +184,10 @@
         #feedback-screen {
             display: none;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             gap: 1.5rem;
             width: 100%;
             text-align: center;
-            position: absolute;
-            top: 0;
-            left: 0;
-            height: 100%;
-            padding: 20px;
-            box-sizing: border-box;
         }
 
         .feedback-message {
@@ -206,17 +197,20 @@
             border-radius: 15px;
             width: 100%;
         }
-        
-        .correct-answer-display {
-            font-size: 5rem;
-            font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            color: white; /* Default color for correct answer display */
+
+        .feedback-message.correct {
+            color: white;
+            background-color: var(--success-color);
         }
         
-        .correct-answer-display.incorrect-text {
-            color: var(--error-color); /* Red color for incorrect answer feedback */
-            text-shadow: none;
+        .feedback-message.incorrect {
+            color: white;
+            background-color: var(--error-color);
+        }
+        
+        .feedback-details {
+            font-size: 1.2rem;
+            color: var(--dark-text);
         }
 
         /* Mobile-first adjustments */
@@ -287,9 +281,9 @@
         </div>
 
         <!-- Feedback Screen -->
-        <div id="feedback-screen" style="display: none;">
+        <div id="feedback-screen">
             <div class="feedback-message" id="feedbackMessage"></div>
-            <div class="correct-answer-display" id="correctAnswerDisplay"></div>
+            <div class="feedback-details" id="feedbackDetails"></div>
         </div>
 
         <!-- End of Set Screen -->
@@ -299,7 +293,7 @@
             <div class="game-btn-container">
                 <button id="nextSetBtn" class="game-btn" style="display: none;">ไปยังชุดถัดไป</button>
                 <button id="restartBtn" class="game-btn" style="display: none;"></button>
-                <button id="backToHomeBtn" class="game-btn" style="display: none;">กลับไปหน้าแรก</button>
+                <button id="backToHomeBtn" class="game-btn">กลับไปหน้าแรก</button>
             </div>
         </div>
     </div>
@@ -320,7 +314,7 @@
         const gameContent = document.getElementById('game-content');
         const feedbackScreen = document.getElementById('feedback-screen');
         const feedbackMessage = document.getElementById('feedbackMessage');
-        const correctAnswerDisplay = document.getElementById('correctAnswerDisplay');
+        const feedbackDetails = document.getElementById('feedbackDetails');
         const endScreen = document.getElementById('end-screen');
         const endMessage = document.getElementById('endMessage');
         const endDetails = document.getElementById('endDetails');
@@ -328,8 +322,8 @@
         const backToHomeBtn = document.getElementById('backToHomeBtn');
 
         // Game state variables
-        let totalQuestions = 20;
-        let totalSets = 7;
+        const totalQuestions = 20;
+        const totalSets = 7;
         let score = 0;
         let currentSet = 1;
         let questionIndex = 0;
@@ -339,8 +333,6 @@
         // Timer variables
         let timeElapsed = 0;
         let timerInterval;
-        
-        const mainBackground = '#FFA500';
 
         // Tone.js sound effects
         const bellSynth = new Tone.MembraneSynth({
@@ -355,48 +347,34 @@
         }).toDestination();
 
         /**
-         * Generates a random subtraction problem.
-         * The minuend can be 1 or 2 digits, and the result is within 99.
-         * The subtrahend is always smaller than the minuend.
+         * Generates a unique subtraction problem with a result not exceeding 98.
+         * The minuend (ตัวตั้ง) can be 1 or 2 digits.
+         * The result must be a positive number.
+         * @returns {Object} An object containing the two numbers and the result.
          */
-        function generateProblem() {
-            let num1, num2;
-            do {
-                // ตัวตั้ง (num1) เป็นเลข 1 หรือ 2 หลัก
-                num1 = Math.floor(Math.random() * 90) + 10; // 10-99
-                if (Math.random() < 0.5) {
-                    num1 = Math.floor(Math.random() * 9) + 1; // 1-9
-                }
-                
-                // ตัวลบ (num2) ต้องน้อยกว่าตัวตั้ง
-                num2 = Math.floor(Math.random() * (num1 - 1)) + 1;
-
-            } while (num1 - num2 > 99); // ผลลัพธ์ต้องไม่เกิน 99
-            
-            return {
-                num1: num1,
-                num2: num2,
-                result: num1 - num2
-            };
+        function generateSubtractionProblem() {
+            let num1 = Math.floor(Math.random() * 99) + 1; // Number from 1 to 99 (1 or 2 digits)
+            let num2 = Math.floor(Math.random() * num1) + 1; // Number from 1 up to num1
+            let result = num1 - num2;
+            return { num1, num2, result };
         }
 
         /**
-         * Pre-generates all unique subtraction problems and splits them into sets.
+         * Generates all unique subtraction problems and splits them into sets.
          */
         function preGenerateProblems() {
             const possibleProblems = [];
             const problemsSet = new Set();
-            for (let i = 0; i < totalQuestions * totalSets; i++) {
-                let newProblem;
-                do {
-                    newProblem = generateProblem();
-                    const problemKey = `${newProblem.num1}-${newProblem.num2}`;
-                    if (!problemsSet.has(problemKey)) {
-                        possibleProblems.push(newProblem);
-                        problemsSet.add(problemKey);
-                        break;
-                    }
-                } while(true);
+            let count = 0;
+            // Generate enough problems for all sets
+            while (count < totalQuestions * totalSets * 2) { 
+                const problem = generateSubtractionProblem();
+                const problemKey = `${problem.num1}-${problem.num2}`;
+                if (!problemsSet.has(problemKey)) {
+                    possibleProblems.push(problem);
+                    problemsSet.add(problemKey);
+                    count++;
+                }
             }
             // Shuffle the problems
             for (let i = possibleProblems.length - 1; i > 0; i--) {
@@ -421,7 +399,6 @@
                 btn.disabled = false;
                 btn.classList.remove('correct-answer', 'incorrect-answer');
             });
-            correctAnswerDisplay.classList.remove('incorrect-text');
 
             currentProblem = allProblems[currentSet - 1][questionIndex];
             const { num1, num2, result } = currentProblem;
@@ -433,22 +410,9 @@
             const choices = new Set();
             choices.add(correctAnswer);
             while (choices.size < 3) {
-                let incorrectAnswer;
-                // Generate incorrect answers around the correct answer
-                if (correctAnswer === 0) {
-                    incorrectAnswer = Math.floor(Math.random() * 10) + 1; // 1-10
-                } else if (correctAnswer === 1) {
-                    incorrectAnswer = Math.floor(Math.random() * 10) + 2; // 2-11
-                } else {
-                    const deviation = Math.floor(Math.random() * 5) + 1; // 1-5
-                    incorrectAnswer = (Math.random() < 0.5) ? correctAnswer + deviation : correctAnswer - deviation;
-                    if (incorrectAnswer < 0) {
-                         incorrectAnswer = Math.abs(incorrectAnswer);
-                    }
-                }
-                
-                // Ensure incorrect answer is not a duplicate and is not negative
-                if (!choices.has(incorrectAnswer) && incorrectAnswer >= 0) {
+                // Generate a random incorrect answer within a reasonable range (e.g., +/- 10 from the correct answer)
+                let incorrectAnswer = Math.max(0, correctAnswer + Math.floor(Math.random() * 21) - 10);
+                if (incorrectAnswer !== correctAnswer && !choices.has(incorrectAnswer)) {
                     choices.add(incorrectAnswer);
                 }
             }
@@ -469,33 +433,25 @@
             const userAnswer = parseInt(selectedBtn.textContent, 10);
             const { result } = currentProblem;
 
-            // Fade out game content
-            gameContent.style.opacity = '0';
+            gameContent.style.display = 'none';
+            feedbackScreen.style.display = 'flex';
+
+            if (userAnswer === result) {
+                // Correct answer: Show only green background
+                feedbackMessage.textContent = '';
+                feedbackMessage.className = 'feedback-message correct';
+                feedbackDetails.textContent = '';
+                score++;
+                scoreSpan.textContent = score;
+                bellSynth.triggerAttackRelease("C5", "8n");
+            } else {
+                // Incorrect answer: Show only the correct number on a red background
+                feedbackMessage.textContent = result;
+                feedbackMessage.className = 'feedback-message incorrect';
+                feedbackDetails.textContent = '';
+                buzzer.triggerAttackRelease("C3", "8n");
+            }
             
-            // Wait for fade out, then change screen and background
-            setTimeout(() => {
-                gameContent.style.display = 'none';
-                feedbackScreen.style.display = 'flex';
-
-                if (userAnswer === result) {
-                    // ถ้าตอบถูก: หน้าจอจะเปลี่ยนเป็นพื้นหลังสีเขียวล้วน ไม่มีข้อความ
-                    document.body.style.backgroundColor = 'var(--success-color)';
-                    feedbackMessage.style.display = 'none';
-                    correctAnswerDisplay.style.display = 'none';
-                    score++;
-                    scoreSpan.textContent = score;
-                    bellSynth.triggerAttackRelease("C5", "8n");
-                } else {
-                    // ถ้าตอบผิด: หน้าจอจะเปลี่ยนเป็นพื้นหลังสีเทาอ่อน และแสดงเฉพาะตัวเลขคำตอบที่ถูกต้องเป็นสีแดง
-                    document.body.style.backgroundColor = 'var(--light-bg)';
-                    feedbackMessage.style.display = 'none';
-                    correctAnswerDisplay.textContent = result;
-                    correctAnswerDisplay.classList.add('incorrect-text');
-                    correctAnswerDisplay.style.display = 'block';
-                    buzzer.triggerAttackRelease("C3", "8n");
-                }
-            }, 500); // Wait for the fade-out duration
-
             // Automatically transition to the next question after 2 seconds
             setTimeout(showNextQuestion, 2000); 
         }
@@ -512,10 +468,6 @@
             feedbackScreen.style.display = 'none';
             endScreen.style.display = 'none';
             gameContent.style.display = 'flex';
-            gameContent.style.opacity = '1';
-
-            // Reset background color
-            document.body.style.backgroundColor = mainBackground;
 
             timeElapsed = 0;
             timerSpan.textContent = timeElapsed;
@@ -537,9 +489,8 @@
             gameContent.style.display = 'none';
             feedbackScreen.style.display = 'none';
             endScreen.style.display = 'flex';
+            nextSetBtn.style.display = 'none';
             backToHomeBtn.style.display = 'block';
-            nextSetBtn.style.display = 'none'; // Hide "ไปยังชุดถัดไป" button
-            document.body.style.backgroundColor = mainBackground;
 
             if (currentSet < totalSets) {
                 endMessage.textContent = `ชุดที่ ${currentSet} จบแล้ว!`;
@@ -548,7 +499,7 @@
                 restartBtn.style.display = 'block';
             } else {
                 endMessage.textContent = 'ยินดีด้วย! คุณทำครบทุกชุดแล้ว!';
-                endDetails.textContent = `คะแนนรวมทั้งหมดของคุณคือ ${score} จาก ${totalQuestions * totalSets} คะแนน ในเวลา ${timeElapsed} วินาที!`;
+                endDetails.textContent = `คะแนนรวมทั้งหมดของคุณคือ ${score} จาก ${totalQuestions} คะแนน ในเวลา ${timeElapsed} วินาที!`;
                 restartBtn.textContent = 'เริ่มเกมใหม่';
                 restartBtn.style.display = 'block';
             }
@@ -560,8 +511,6 @@
         function showNextQuestion() {
             feedbackScreen.style.display = 'none';
             gameContent.style.display = 'flex';
-            gameContent.style.opacity = '1';
-            document.body.style.backgroundColor = mainBackground;
             loadNextQuestion();
         }
 
